@@ -1,0 +1,27 @@
+
+services:
+  bot:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/bot
+      - ./modello:/bot/modello
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/telegram_bot
+    depends_on:
+      - db
+
+  db:
+    image: bitnami/postgresql:latest
+    environment:
+      POSTGRES_DB: telegram_bot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  db-data:
