@@ -1,14 +1,17 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, CallbackContext
 import logging
-import database
+import database as database
 from message import Message
 from llama_cpp import Llama
 import nest_asyncio
 import json
 
 nest_asyncio.apply()
+
 messaggi = Message()
+
+
 # Configura il logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,8 +22,8 @@ with open('config.json') as config_file:
 
 # Configura il bot
 TOKEN = config['TOKEN'] #Token del bot
-
-model_name = "./modello/Mistral-7B-Instruct-v0.3-Q5_K_M.gguf"
+model_name = config['model_name'] #model AI 
+print(TOKEN, model_name)
 
 # Carica il modello LLaMA
 llm = Llama(
@@ -182,7 +185,7 @@ async def after_challenge (update: Update, context: CallbackContext):
         return
     elif (choise =="stop"):
         
-        await query.edit_message_text(await messaggi.get_messaggio("saluti", username))
+        await query.edit_message_text(messaggi.get_messaggio("saluti"))
         return
     else:
         await query.edit_message_text("non mi è chiara la tua richiesta")

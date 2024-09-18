@@ -1,8 +1,10 @@
 FROM python:3.12.5
 
-COPY . /bot
-WORKDIR /bot
-RUN pip install -r requirements.txt 
+COPY main /bot/main/
+COPY modello /bot/modello/
+COPY requirements.txt /bot/
+RUN pip install -r /bot/requirements.txt && pip freeze
+WORKDIR /bot/main
 EXPOSE 5000
 
-CMD ["python", "bot.py"]
+CMD ["sh", "-c", "python create_tables.py && python bot.py"]

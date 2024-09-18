@@ -1,8 +1,14 @@
 import logging
 import psycopg2
+import json
 from contextlib import contextmanager
 
-DATABASE_URL = "postgresql://postgres:password@localhost:5432/telegram_bot"
+
+with open ('config.json') as config_file:
+    config = json.load(config_file)
+
+
+DATABASE_URL = config['DATABASE_URL']
 logger = logging.getLogger(__name__)
 # Gestione della connessione con un context manager
 @contextmanager

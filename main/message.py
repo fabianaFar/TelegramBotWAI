@@ -8,7 +8,7 @@ class Message:
             "scelta": "😎Perfetto!😎 Hai scelto {} 😏! Ora non ti resta che scegliere il livello di difficoltà:",
             "delete_history": "Va bene, puoi ricominciare in qualsiasi momento digitando /start!",
             "error" : "Generazione non andata a buon fine",
-            "saluti": "E' stato un piacere averti con noi {}! Spero che questo canale ti abbia permesso di prepararti al meglio. Noi saremo qui quando ne avrai bisogno!😉 A presto!💪"
+            "saluti": "E' stato un piacere averti con noi! Spero che questo canale ti abbia permesso di prepararti al meglio. Noi saremo qui quando ne avrai bisogno!😉 A presto!💪"
         }
 
     async def get_messaggio(self, chiave: str, valore: Optional[str] = None) -> str:
