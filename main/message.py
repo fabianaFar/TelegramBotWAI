@@ -8,7 +8,8 @@ class Message:
             "scelta": "😎Perfetto!😎 Hai scelto {} 😏! Ora non ti resta che scegliere il livello di difficoltà:",
             "delete_history": "Va bene, puoi ricominciare in qualsiasi momento digitando /start!",
             "error" : "Generazione non andata a buon fine",
-            "saluti": "E' stato un piacere averti con noi! Spero che questo canale ti abbia permesso di prepararti al meglio. Noi saremo qui quando ne avrai bisogno!😉 A presto!💪"
+            "saluti": "E' stato un piacere averti con noi! Spero che questo canale ti abbia permesso di prepararti al meglio. Noi saremo qui quando ne avrai bisogno!😉 A presto!💪",
+            "ricomincia": "Hai deciso di eliminare tutta la cronologia, per cui non sono più presenti sfide associate al tuo user! Puoi ricominciare da capo in qualsiasi momento, ti basta digitare /start!"
         }
 
     async def get_messaggio(self, chiave: str, valore: Optional[str] = None) -> str:
@@ -32,3 +33,13 @@ class Message:
         ]
 
         return random.choice(text_generation_challenge)
+    
+    async def user_typing(self) -> str:
+        random_answer: List[str] = [
+            "Mhh, forse non ho ben capito cosa mi hai chiesto 😢​, puoi digitare /start per ricominciare oppure cliccare uno dei button per fare la tua scelta! 💡",
+            "Hei hei 😅​ la mia intelligenza artificiale è solo per le sifde di coding.",
+            "Mi spiace ma sono programmato solo per somministrare sfide, non per altre piacevoli conversazioni. 🤭​",
+            "Ops, mi sai che hai eseguito un'azione per cui non sono programmato (non sono batman 🤌​)",
+        ]
+
+        return random.choices(random_answer)

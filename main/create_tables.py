@@ -1,5 +1,4 @@
 import json
-import os
 from sqlalchemy import create_engine, Column, BigInteger, String, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.exc import SQLAlchemyError
@@ -23,13 +22,13 @@ Base = declarative_base()
 class Utente(Base):
     __tablename__ = 'utenti'
     id_utente = Column(BigInteger, primary_key=True, index=True)
-    chat_id = Column(String, unique=True, nullable=False)
+    chat_id = Column(BigInteger, unique=True, nullable=False)
 
 class Challenge(Base):
     __tablename__ = 'challenge'
     id_challenge = Column(BigInteger, primary_key=True, index=True)
     challenge = Column(String, nullable=False)
-    chat_id_utente = Column(BigInteger, ForeignKey('utenti.id_utente'))
+    chat_id_utente = Column(BigInteger, ForeignKey('utenti.chat_id'), nullable=False)
 
     # Relazione con la tabella utenti
     utente = relationship('Utente')

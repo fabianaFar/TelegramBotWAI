@@ -11,19 +11,17 @@ nest_asyncio.apply()
 
 messaggi = Message()
 
-
 # Configura il logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-#File config per ricavare il token
+#File config per ricavare il token e model_name
 with open('config.json') as config_file:
     config = json.load(config_file)
 
 # Configura il bot
 TOKEN = config['TOKEN'] #Token del bot
 model_name = config['model_name'] #model AI 
-print(TOKEN, model_name)
 
 # Carica il modello LLaMA
 llm = Llama(
@@ -36,39 +34,48 @@ llm = Llama(
 
 # Funzione che si attiva allo /start
 async def start(update: Update, context: CallbackContext) -> None:
-    user = update.message.from_user
+    user = update.message.from_user #recupera l'username dell'utente
     username= user.username
-    chat_id = update.effective_chat.id
-    user_id = database.get_chat_id(chat_id)
+    chat_id = update.effective_chat.id #recupera il chat_id dell'utente
+    user_id = database.get_chat_id(chat_id) 
     
-    if user_id is None:
-        # Se l'utente non esiste, lo inserisco nel database
-        database.set_chat_id(chat_id)
-        logger.info(f"Nuovo chat_id inserito: {chat_id}")
-        text = "Benvenuto " + username + ". "
-    else:
-        logger.info(f"Utente esistente con chat_id: {chat_id}")
-        text = "Bentornato "+ username + ". "
-    
+    #Set dei button da mostrare all'invio del messaggio
     keyboard = [
         [InlineKeyboardButton("Java ☕", callback_data="Java")],
         [InlineKeyboardButton("JavaScript 🟨", callback_data="JavaScript")],
         [InlineKeyboardButton("Python 🐍", callback_data="Python")],
-        [InlineKeyboardButton("Cancella tutto", callback_data="delete")]
     ]
+    #Button aggiuntivo in caso in cui l'utente è già registrato
+    keyboard_not_new_user = [[InlineKeyboardButton("Ripristina Cronologia", callback_data="delete")]]
+    
+    #racchiudo in una variabile i button
     reply_markup = InlineKeyboardMarkup(keyboard)
+
+     # Se l'utente non esiste, lo inserisco nel database
+    if user_id is None:
+        database.set_chat_id(chat_id)
+        text = "Benvenuto " + username + ". "
+    #Altrimenti:
+    else:
+        text = "Bentornato "+ username + ". "
+        keyboard.extend(keyboard_not_new_user)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+
+    #Invio il messaggio di benvenuto
     await update.message.reply_text(
         text + await messaggi.get_messaggio("benvenuto"),
         reply_markup=reply_markup
     )
 
+
 # Funzione che gestisce la scelta dei button
 async def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     chat_id = update.effective_chat.id
-
     language = query.data
-    if (language != "delete"):
+
+    if (language != "delete"): #se la scelta dell'utente è diversa da "delete"
         keyboard = [
             [InlineKeyboardButton("Base", callback_data=f"{language}_Base")],
             [InlineKeyboardButton("Intermedio", callback_data=f"{language}_Intermedio")],
@@ -84,8 +91,7 @@ async def button(update: Update, context: CallbackContext) -> None:
         )
     else:
         database.delete_id_utente(chat_id=chat_id)
-        logger.info("Utente eliminato")
-        await query.edit_message_text("Va bene, puoi ricominciare in qualsiasi momento digitando /start!")
+        await query.edit_message_text(messaggi.get_messaggio("ricomincia"))
 
 
 
@@ -101,6 +107,7 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
         await start(update, context)
         return
 
+    #Richiesta al modello AI
     contexts = [{
     "role": "user",
     "content": (
@@ -116,9 +123,7 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
 
     )
 }]
-
-
-    text_random = await messaggi.random_message()
+    text_random = await messaggi.random_message() #recupera i messaggi in maniera randomica dalla classe Messaggi (message.py)
     keyboard = [
         [InlineKeyboardButton("Cambia challenge", callback_data="change")],
         [InlineKeyboardButton("Soluzione", callback_data="solution")],
@@ -129,37 +134,33 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
     
     await query.edit_message_text(text= text_random)
     try:
-        logger.info(contexts
-                    )
         challenge = llm.create_chat_completion(messages=contexts, max_tokens=350)
-        logger.info("Generato il contenuto della sfida")
-
         if challenge:
             challenge_content = challenge["choices"][0]["message"]["content"]
             chat_id = update.effective_chat.id
 
             # Verifica se la sfida è già presente per l'utente
-            max_attempts = 5
-            attempts = 0
+            max_attempts = 5 #massimo dei tentativi per la generazione di sfide
+            attempts = 0 #tentativi attuali
 
+            #Controlla se la challenge è stata già generata e ne genera una nuova
             while database.get_challenge(chat_id, challenge_content) > 0 and attempts < max_attempts:
-                logger.info("La sfida esiste già, genero una nuova sfida")
                 challenge = llm.create_chat_completion(messages=contexts, max_tokens=350)
                 if challenge:
                     challenge_content = challenge["choices"][0]["message"]["content"]
-                    attempts += 1
+                    attempts += 1 #aumenta di uno i tentativi
                 else:
-                    keyboard.remove([1])
+                    keyboard.remove([1]) #in caso di errore
                     await query.edit_message_text(messaggi.get_messaggio("error"), reply_markup=replaymarkup)
                     return
-
+            #se i tentativi superano i 5
             if attempts >= max_attempts:
-                await query.edit_message_text("Non sono riuscito a generare una sfida unica. Per favore riprova più tardi.")
+                keyboard.remove([1])
+                await query.edit_message_text("Non sono riuscito a generare una sfida unica. Per favore riprova più tardi.", reply_markup=replaymarkup)
                 return
 
-            # Salva la nuova sfida nel database
+            # Se tutto va bene allora salva la nuova sfida nel database
             database.set_challenge(challenge_content, chat_id)
-            logger.info(challenge_content)
             await query.edit_message_text(text=challenge_content, reply_markup=replaymarkup)
         else:
             await query.edit_message_text(messaggi.get_messaggio("error"))
@@ -168,9 +169,10 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
         await query.edit_message_text(messaggi.get_messaggio("error"), reply_markup=replaymarkup)
         logger.error(f"Errore nella generazione della sfida: {e}")
 
+
+
+
 async def after_challenge (update: Update, context: CallbackContext):
-    user = update.message.from_user
-    username= user.username
     query = update.callback_query
     choise = query.data
 
@@ -213,8 +215,8 @@ async def after_challenge (update: Update, context: CallbackContext):
 #         logger.error(f"Errore nella generazione della soluzione: {e}")
 
 
-async def echo(update: Update, context: CallbackContext) -> None:#Genera una sfida di coding per il linguaggio {language} con difficoltà {difficulty}. 
-    await update.message.reply_text(update.message.text)
+async def echo(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text(text=messaggi.user_typing())
 
 
 def main() -> None:
