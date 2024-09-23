@@ -47,7 +47,7 @@ async def start(update: Update, context: CallbackContext) -> None:
         [InlineKeyboardButton("Python 🐍", callback_data="Python")],
     ]
     #Button aggiuntivo in caso in cui l'utente è già registrato
-    keyboard_not_new_user = [[InlineKeyboardButton("Ripristina Cronologia", callback_data="delete")]]
+    keyboard_not_new_user = [[InlineKeyboardButton("Elimina Cronologia", callback_data="delete")]]
     
     #racchiudo in una variabile i button
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -55,17 +55,17 @@ async def start(update: Update, context: CallbackContext) -> None:
      # Se l'utente non esiste, lo inserisco nel database
     if user_id is None:
         database.set_chat_id(chat_id)
-        text = "Benvenuto " + username + ". "
+        final_text= await messaggi.get_messaggio("benvenuto", username)
     #Altrimenti:
     else:
-        text = "Bentornato "+ username + ". "
+        final_text = await messaggi.get_messaggio("bentornato", username)
         keyboard.extend(keyboard_not_new_user)
         reply_markup = InlineKeyboardMarkup(keyboard)
 
 
-    #Invio il messaggio di benvenuto
+    #Invio il messaggio
     await update.message.reply_text(
-        text + await messaggi.get_messaggio("benvenuto"),
+        final_text,
         reply_markup=reply_markup
     )
 
@@ -152,7 +152,7 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
             # Verifica se la sfida è già presente per l'utente
             max_attempts = 5 #massimo dei tentativi per la generazione di sfide
             attempts = 0 #tentativi attuali
-
+            
             #Controlla se la challenge è stata già generata e ne genera una nuova
             while database.get_challenge(chat_id, challenge_content) > 0 and attempts < max_attempts:
                 challenge = llm.create_chat_completion(messages=contexts, max_tokens=350)
@@ -179,46 +179,58 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
         await query.edit_message_text(messaggi.get_messaggio("error"), reply_markup=replaymarkup)
         logger.error(f"Errore nella generazione della sfida: {e}")
 
-async def handle_Solution(update: Update, context: CallbackContext) -> None:
-    query= update.callback_query
     
+async def solution(update: Update) -> None:
+    query = update.callback_query
+    chat_id = update.effective_chat.id
+    recupered_challenge = database.get_last_challenge(chat_id=chat_id)
+    contexts = [{
+    "role": "user",
+    "content": (
+            f"""Trovami una soluzione per questa sfida {recupered_challenge} che sia in codice e spiegato.
+            """
 
+    )
+    }]
+    keyboard = [
+        [InlineKeyboardButton("Ricomincia", callback_data="restart")],
+        [InlineKeyboardButton("Termina", callback_data="stop")]
+    ]
+    replaymarkup= InlineKeyboardMarkup(keyboard)
+    text_solution_random = await messaggi.random_solution_message()
+    await query.edit_message_text(text=text_solution_random)
+    try:
+        challenge = llm.create_chat_completion(messages=contexts, max_tokens=500)
+        if(challenge):
+            challenge_content= challenge["choices"][0]["message"]["content"]
+            await query.edit_message_text(text=challenge_content, reply_markup=replaymarkup)
+            return
+        else:
+            await query.edit_message_text("Non sono riuscito a generare la soluzione, mi spiace.")
+    except Exception as e:
+        logger.info("Errore: ", e)
+        return
 
 async def after_challenge (update: Update, context: CallbackContext):
     query = update.callback_query
     choise = query.data
+    
 
     if(choise == "change"):
         await handle_challenge(update, context)
         return
-    # elif choise == "solution":
-    #     challenge = 
-    #     await handle_solution(update, context)
-    #     return
+    elif (choise == "solution"):
+        await solution(update)
+        return
+    elif(choise == "stop"):
+        text= await messaggi.get_messaggio("saluti")
+        await query.edit_message_text(text=text)
+        return
+    elif (choise == "restart"):
+        await start(update)
+        return
     else:
         await query.edit_message_text("non mi è chiara la tua richiesta")
-
-# async def generate_solution(update: Update, context: CallbackContext):
-#     query = update.callback_query
-
-#     challenge_content = database.get_last_challenge(update.effective_chat.id)  # Recupera l'ultima sfida dal DB
-#     if not challenge_content:
-#         await query.edit_message_text("Nessuna sfida trovata per generare la soluzione.")
-#         return
-
-#     messages = [{
-#         "role": "user",
-#         "content": f"Forniscimi la soluzione per la seguente sfida: {challenge_content}"
-#     }]
-
-#     try:
-#         # Richiesta della soluzione tramite LLM
-#         solution = llm.create_chat_completion(messages=messages, max_tokens=350)
-#         solution_content = solution["choices"][0]["message"]["content"]
-#         await query.edit_message_text(f"Soluzione: {solution_content}")
-#     except Exception as e:
-#         await query.edit_message_text("Generazione della soluzione non andata a buon fine")
-#         logger.error(f"Errore nella generazione della soluzione: {e}")
 
 
 async def echo(update: Update, context: CallbackContext) -> None:
@@ -230,8 +242,8 @@ def main() -> None:
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button, pattern='^(JavaScript|Python|Java|delete)$'))
-    application.add_handler(CallbackQueryHandler(after_challenge, pattern='^(change|solution|restart|stop)$'))
     application.add_handler(CallbackQueryHandler(handle_challenge, pattern='^(JavaScript|Python|Java)_(Base|Intermedio|Avanzato|back)$'))
+    application.add_handler(CallbackQueryHandler(after_challenge, pattern='^(change|solution|restart|stop)$'))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
     application.run_polling()

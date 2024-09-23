@@ -70,11 +70,12 @@ def get_challenge(chat_id, challenge):
     except Exception as e:
         logger.info("Problema nel recuperare la sfida")
         return 0
-def get_last_challenge(chat_id, challenge):
+    
+def get_last_challenge(chat_id):
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT challenge FROM challenge WHERE challenge = '%s'", (challenge))
+            cursor.execute("SELECT challenge FROM challenge WHERE chat_id_utente = %s ORDER BY timestamp DESC LIMIT 1", ( chat_id))
             result = cursor.fetchone()[0]
             return result
     except Exception as e:
