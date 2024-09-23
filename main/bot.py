@@ -38,6 +38,7 @@ async def start(update: Update, context: CallbackContext) -> None:
     username= user.username
     chat_id = update.effective_chat.id #recupera il chat_id dell'utente
     user_id = database.get_chat_id(chat_id) 
+    logger.info(chat_id)
     
     #Set dei button da mostrare all'invio del messaggio
     keyboard = [
@@ -75,7 +76,7 @@ async def button(update: Update, context: CallbackContext) -> None:
     chat_id = update.effective_chat.id
     language = query.data
 
-    if (language != "delete"): #se la scelta dell'utente è diversa da "delete"
+    if language != "delete":
         keyboard = [
             [InlineKeyboardButton("Base", callback_data=f"{language}_Base")],
             [InlineKeyboardButton("Intermedio", callback_data=f"{language}_Intermedio")],
@@ -83,16 +84,16 @@ async def button(update: Update, context: CallbackContext) -> None:
             [InlineKeyboardButton("Torna indietro", callback_data="back")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        # Modifica il messaggio esistente con i nuovi bottoni
+
+        # Modifica il messaggio esistente con i nuovi bottoni per la scelta della difficoltà
         await query.edit_message_text(
             await messaggi.get_messaggio("scelta", language),
             reply_markup=reply_markup
         )
-    else:
+    # Se l'utente vuole eliminare la cronologia
+    elif language == "delete":
         database.delete_id_utente(chat_id=chat_id)
-        await query.edit_message_text(messaggi.get_messaggio("ricomincia"))
-
+        await query.edit_message_text(await messaggi.get_messaggio("ricomincia"))
 
 
 
@@ -104,8 +105,17 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
     
 
     if choice == "back":
-        await start(update, context)
-        return
+            keyboard = [
+                [InlineKeyboardButton("Java ☕", callback_data="Java")],
+                [InlineKeyboardButton("JavaScript 🟨", callback_data="JavaScript")],
+                [InlineKeyboardButton("Python 🐍", callback_data="Python")],
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(
+                "Rieccoci, puoi selezionare nuovamente il linguaggio che desideri.",
+                reply_markup=reply_markup
+            )
+            return
 
     #Richiesta al modello AI
     contexts = [{
@@ -151,7 +161,7 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
                     attempts += 1 #aumenta di uno i tentativi
                 else:
                     keyboard.remove([1]) #in caso di errore
-                    await query.edit_message_text(messaggi.get_messaggio("error"), reply_markup=replaymarkup)
+                    await query.edit_message_text(await messaggi.get_messaggio("error"), reply_markup=replaymarkup)
                     return
             #se i tentativi superano i 5
             if attempts >= max_attempts:
@@ -169,7 +179,9 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
         await query.edit_message_text(messaggi.get_messaggio("error"), reply_markup=replaymarkup)
         logger.error(f"Errore nella generazione della sfida: {e}")
 
-
+async def handle_Solution(update: Update, context: CallbackContext) -> None:
+    query= update.callback_query
+    
 
 
 async def after_challenge (update: Update, context: CallbackContext):
@@ -179,16 +191,10 @@ async def after_challenge (update: Update, context: CallbackContext):
     if(choise == "change"):
         await handle_challenge(update, context)
         return
-    # elif(choise =="solution"):
-    #     await generate_solution()
+    # elif choise == "solution":
+    #     challenge = 
+    #     await handle_solution(update, context)
     #     return
-    elif(choise =="restart"):
-        await start()
-        return
-    elif (choise =="stop"):
-        
-        await query.edit_message_text(messaggi.get_messaggio("saluti"))
-        return
     else:
         await query.edit_message_text("non mi è chiara la tua richiesta")
 

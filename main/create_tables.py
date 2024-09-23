@@ -2,6 +2,7 @@ import json
 from sqlalchemy import create_engine, Column, BigInteger, String, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.exc import SQLAlchemyError
+import logging
 
 # Carica la configurazione dal file config.json
 def load_config(config_file='config.json'):
@@ -15,6 +16,8 @@ config = load_config()
 DATABASE_URL = config.get('DATABASE_URL')
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL non trovato nel file di configurazione.")
+else:
+    logging.info(f"Connessione al database: {DATABASE_URL}")
 
 # Definisci i modelli e crea le tabelle
 Base = declarative_base()
@@ -23,15 +26,18 @@ class Utente(Base):
     __tablename__ = 'utenti'
     id_utente = Column(BigInteger, primary_key=True, index=True)
     chat_id = Column(BigInteger, unique=True, nullable=False)
+    
+    # Relazione con le sfide
+    challenges = relationship('Challenge', back_populates='utente', cascade='all, delete-orphan')
 
 class Challenge(Base):
     __tablename__ = 'challenge'
     id_challenge = Column(BigInteger, primary_key=True, index=True)
     challenge = Column(String, nullable=False)
-    chat_id_utente = Column(BigInteger, ForeignKey('utenti.chat_id'), nullable=False)
+    chat_id_utente = Column(BigInteger, ForeignKey('utenti.chat_id', ondelete='CASCADE'), nullable=False)
 
     # Relazione con la tabella utenti
-    utente = relationship('Utente')
+    utente = relationship('Utente', back_populates='challenges')
 
 # Configura la connessione al database
 engine = create_engine(DATABASE_URL)

@@ -70,11 +70,30 @@ def get_challenge(chat_id, challenge):
     except Exception as e:
         logger.info("Problema nel recuperare la sfida")
         return 0
+def get_last_challenge(chat_id, challenge):
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT challenge FROM challenge WHERE challenge = '%s'", (challenge))
+            result = cursor.fetchone()[0]
+            return result
+    except Exception as e:
+        logger.info("Errore nel ricavare l'ultima sfida", e)
+
 
 def set_challenge(challenge, chat_id):
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
+            
+            # Verifica se l'utente esiste
+            cursor.execute("SELECT id_utente FROM utenti WHERE chat_id = %s", (chat_id,))
+            utente = cursor.fetchone()
+            if not utente:
+                logger.info(f"Utente con chat_id {chat_id} non trovato. Impossibile inserire la sfida.")
+                return
+            
+            # Inserisci la sfida solo se l'utente esiste
             cursor.execute("INSERT INTO challenge (challenge, chat_id_utente) VALUES (%s, %s)", (challenge, chat_id))
             conn.commit()
     except Exception as e:
