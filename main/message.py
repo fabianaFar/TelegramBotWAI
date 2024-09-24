@@ -10,7 +10,8 @@ class Message:
             "delete_history": "Va bene, puoi ricominciare in qualsiasi momento digitando /start!",
             "error" : "Generazione non andata a buon fine",
             "saluti": "E' stato un piacere averti con noi! Spero che questo canale ti abbia permesso di prepararti al meglio. Noi saremo qui quando ne avrai bisogno!😉 A presto!💪",
-            "ricomincia": "Hai deciso di eliminare tutta la cronologia, per cui non sono più presenti sfide associate al tuo user! Puoi ricominciare da capo in qualsiasi momento, ti basta digitare /start!"
+            "ricomincia": "Hai deciso di eliminare tutta la cronologia, per cui non sono più presenti sfide associate al tuo user! Puoi ricominciare da capo in qualsiasi momento, ti basta digitare /start!",
+            "return" : "Pare che tu abbia cambiato idea sul linguaggio che hai scelto 😏. \nPuoi riselezionarlo: ⤵️"
         }
     async def get_messaggio(self, chiave: str, valore: Optional[str] = None) -> str:
         if valore is not None:

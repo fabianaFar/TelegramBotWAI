@@ -34,12 +34,29 @@ llm = Llama(
 
 # Funzione che si attiva allo /start
 async def start(update: Update, context: CallbackContext) -> None:
-    user = update.message.from_user #recupera l'username dell'utente
-    username= user.username
-    chat_id = update.effective_chat.id #recupera il chat_id dell'utente
-    user_id = database.get_chat_id(chat_id) 
-    logger.info(chat_id)
+       # Verifica se è un comando (/start) o una CallbackQuery
+    if update.message:
+        user = update.message.from_user
+        chat_id = update.message.chat_id
+        query = None
+    elif update.callback_query:
+        user = update.callback_query.from_user
+        chat_id = update.callback_query.message.chat_id
+        query = update.callback_query  # Definisci 'query' solo in caso di CallbackQuery
+    else:
+        logger.error("Impossibile determinare l'utente e il chat_id.")
+        return
+
+    username = user.username
+    user_id = database.get_chat_id(chat_id)
+
+    logger.info(f"Chat ID: {chat_id}, Username: {username}")
     
+    # Memorizza chat_id e username in una variabile di sessione
+    context.user_data['chat_id'] = chat_id
+    context.user_data['username'] = username
+
+
     #Set dei button da mostrare all'invio del messaggio
     keyboard = [
         [InlineKeyboardButton("Java ☕", callback_data="Java")],
@@ -52,22 +69,29 @@ async def start(update: Update, context: CallbackContext) -> None:
     #racchiudo in una variabile i button
     reply_markup = InlineKeyboardMarkup(keyboard)
 
+    choise = query.data if query and query.data else None
+
+    
+    if choise is None or "back" not in choise:
      # Se l'utente non esiste, lo inserisco nel database
-    if user_id is None:
-        database.set_chat_id(chat_id)
-        final_text= await messaggi.get_messaggio("benvenuto", username)
-    #Altrimenti:
+        if user_id is None:
+            database.set_chat_id(chat_id)
+            final_text= await messaggi.get_messaggio("benvenuto", username)
+        #Altrimenti:
+        else:
+            final_text = await messaggi.get_messaggio("bentornato", username)
+            keyboard.extend(keyboard_not_new_user)
+            reply_markup = InlineKeyboardMarkup(keyboard)
     else:
-        final_text = await messaggi.get_messaggio("bentornato", username)
-        keyboard.extend(keyboard_not_new_user)
+        final_text = await messaggi.get_messaggio("return")
         reply_markup = InlineKeyboardMarkup(keyboard)
 
 
     #Invio il messaggio
-    await update.message.reply_text(
-        final_text,
-        reply_markup=reply_markup
-    )
+    if update.message:
+        await update.message.reply_text(final_text, reply_markup=reply_markup)
+    elif update.callback_query:
+        await update.callback_query.message.edit_text(final_text, reply_markup=reply_markup)
 
 
 # Funzione che gestisce la scelta dei button
@@ -81,7 +105,7 @@ async def button(update: Update, context: CallbackContext) -> None:
             [InlineKeyboardButton("Base", callback_data=f"{language}_Base")],
             [InlineKeyboardButton("Intermedio", callback_data=f"{language}_Intermedio")],
             [InlineKeyboardButton("Avanzato", callback_data=f"{language}_Avanzato")],
-            [InlineKeyboardButton("Torna indietro", callback_data="back")]
+            [InlineKeyboardButton("Torna indietro", callback_data=f"{language}_back")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -94,27 +118,19 @@ async def button(update: Update, context: CallbackContext) -> None:
     elif language == "delete":
         database.delete_id_utente(chat_id=chat_id)
         await query.edit_message_text(await messaggi.get_messaggio("ricomincia"))
+    
 
 
 
 async def handle_challenge(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
+    query = update.callback_query if update.callback_query else None
     choice = query.data
     language, difficulty = choice.split('_') if '_' in choice else (None, None)
     logger.info(f"Query data: {choice}")
     
 
-    if choice == "back":
-            keyboard = [
-                [InlineKeyboardButton("Java ☕", callback_data="Java")],
-                [InlineKeyboardButton("JavaScript 🟨", callback_data="JavaScript")],
-                [InlineKeyboardButton("Python 🐍", callback_data="Python")],
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.edit_message_text(
-                "Rieccoci, puoi selezionare nuovamente il linguaggio che desideri.",
-                reply_markup=reply_markup
-            )
+    if difficulty == "back":
+            await start(update, context)
             return
 
     #Richiesta al modello AI
@@ -227,14 +243,15 @@ async def after_challenge (update: Update, context: CallbackContext):
         await query.edit_message_text(text=text)
         return
     elif (choise == "restart"):
-        await start(update)
+        await start(update, context)
         return
     else:
         await query.edit_message_text("non mi è chiara la tua richiesta")
 
 
 async def echo(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text(text=messaggi.user_typing())
+    random_msg = await messaggi.user_typing()
+    await update.message.reply_text(text=random_msg)
 
 
 def main() -> None:
