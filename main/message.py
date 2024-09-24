@@ -5,12 +5,11 @@ class Message:
     def __init__(self):
         self.messaggi = {
             "benvenuto": "Benvenuto {}! \nSei nel canale di coding test di ✨ Unitiva!✨ 🥳 \nQui potrai mettere alla prova le tue competenze attraverso delle divertenti sfide di coding!🤖💻 \nPer cominciare, quale linguaggio vuoi scegliere?⤵️",
-            "bentornato" : "Bentornato {}! \nRieccoti nel nostro canale, è bello rivederti.🤩\nLe sfide che hai già sostenuto sono state immagazzinate in memoria per garantirti un'esperienza unica e non ripetitiva, pertanto se desideri rimuovere i salvataggi ti basterà cliccare su 'Ripristina cronologia'.😉\nChe sfida vuoi sostenere oggi?⤵️",
+            "bentornato" : "Bentornato {}! \nRieccoti nel nostro canale, è bello rivederti.🤩\nLe sfide che hai già sostenuto sono state immagazzinate in memoria per garantirti un'esperienza unica e non ripetitiva, pertanto se desideri rimuovere i salvataggi ti basterà cliccare su 'Elimina cronologia'.😉\nChe sfida vuoi sostenere oggi?⤵️",
             "scelta": "😎Perfetto!😎 Hai scelto {} 😏! Ora non ti resta che scegliere il livello di difficoltà:",
-            "delete_history": "Va bene, puoi ricominciare in qualsiasi momento digitando /start!",
             "error" : "Generazione non andata a buon fine",
             "saluti": "E' stato un piacere averti con noi! Spero che questo canale ti abbia permesso di prepararti al meglio. Noi saremo qui quando ne avrai bisogno!😉 A presto!💪",
-            "ricomincia": "Hai deciso di eliminare tutta la cronologia, per cui non sono più presenti sfide associate al tuo user! Puoi ricominciare da capo in qualsiasi momento, ti basta digitare /start!",
+            "ricomincia": "Hai deciso di eliminare tutta la cronologia, per cui non sono più presenti sfide associate al tuo user!\nPuoi ricominciare da capo in qualsiasi momento, ti basta digitare /start!",
             "return" : "Pare che tu abbia cambiato idea sul linguaggio che hai scelto 😏. \nPuoi riselezionarlo: ⤵️"
         }
     async def get_messaggio(self, chiave: str, valore: Optional[str] = None) -> str:

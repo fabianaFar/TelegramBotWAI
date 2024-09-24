@@ -75,9 +75,12 @@ def get_last_challenge(chat_id):
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT challenge FROM challenge WHERE chat_id_utente = %s ORDER BY timestamp DESC LIMIT 1", ( chat_id))
-            result = cursor.fetchone()[0]
-            return result
+            cursor.execute("SELECT challenge FROM challenge WHERE chat_id_utente = %s ORDER BY created_at DESC LIMIT 1", (chat_id,))
+            result = cursor.fetchone()
+            if result:
+                return result[0]
+            else:
+                return None 
     except Exception as e:
         logger.info("Errore nel ricavare l'ultima sfida", e)
 

@@ -1,5 +1,6 @@
 import json
-from sqlalchemy import create_engine, Column, BigInteger, String, ForeignKey
+from sqlalchemy import create_engine, Column, BigInteger, String, ForeignKey, DateTime, text  
+from datetime import datetime, timezone
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.exc import SQLAlchemyError
 import logging
@@ -35,6 +36,7 @@ class Challenge(Base):
     id_challenge = Column(BigInteger, primary_key=True, index=True)
     challenge = Column(String, nullable=False)
     chat_id_utente = Column(BigInteger, ForeignKey('utenti.chat_id', ondelete='CASCADE'), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=text("NOW()"))
 
     # Relazione con la tabella utenti
     utente = relationship('Utente', back_populates='challenges')

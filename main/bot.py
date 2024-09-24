@@ -144,6 +144,7 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
             - La tematica delle sfide deve variare ampiamente: esplora problemi che includano interazione con API, database, algoritmi complessi, strutture di dati avanzate (come alberi o grafi), ottimizzazione o integrazione con tecnologie reali.
             - Evita la ripetizione delle stesse tematiche: diversifica le sfide includendo problemi reali e applicazioni concrete (come la gestione di file, comunicazione tra server, o strumenti di analisi dati).
             - Suggerimento: Fornisci un singolo suggerimento utile racchiuso tra asterischi (***), senza rivelare dettagli che potrebbero svelare la soluzione.
+            - Non ripetere le sfide, non proporre sempre sfide con database di libri.
             - Limita la lunghezza totale della sfida a un massimo di 350 parole, mantenendo sempre una formulazione chiara e precisa.
             """
 
