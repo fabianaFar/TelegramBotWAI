@@ -4,11 +4,11 @@ import logging
 import database as database
 from message import Message
 from llama_cpp import Llama
+from pdf2 import PDF
 import nest_asyncio
 import json
 
 nest_asyncio.apply()
-
 messaggi = Message()
 
 # Configura il logging
@@ -139,10 +139,10 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
     "content": (
             f"""Crea una sfida di coding sempre diversa e variegata da quella precedente. La sfida deve riguardare un problema di programmazione da risolvere in {language} con difficoltà {difficulty}. Segui questi requisiti rigorosamente:
             - Non includere mai codice, esempi di input/output o soluzioni, neanche implicitamente.
-            - Titolo: Deve essere breve, descrittivo, e racchiuso tra tre asterischi (***).
+            - Titolo: Deve essere breve, descrittivo, e racchiuso tra tre asterischi, precisando il linguaggio scelto dall'utente (***).
             - Descrizione: Usa la parola 'Descrizione' per introdurre una spiegazione chiara e concisa del problema da risolvere. Non limitarti a problemi semplici come calcolatori o array.
             - La tematica delle sfide deve variare ampiamente: esplora problemi che includano interazione con API, database, algoritmi complessi, strutture di dati avanzate (come alberi o grafi), ottimizzazione o integrazione con tecnologie reali.
-            - Evita la ripetizione delle stesse tematiche: diversifica le sfide includendo problemi reali e applicazioni concrete (come la gestione di file, comunicazione tra server, o strumenti di analisi dati).
+            - Evita la ripetizione delle stesse tematiche: diversifica le sfide includendo problemi reali e applicazioni concrete (come la gestione di file, comunicazione tra server, o    strumenti di analisi dati).
             - Suggerimento: Fornisci un singolo suggerimento utile racchiuso tra asterischi (***), senza rivelare dettagli che potrebbero svelare la soluzione.
             - Non ripetere le sfide, non proporre sempre sfide con database di libri.
             - Limita la lunghezza totale della sfida a un massimo di 350 parole, mantenendo sempre una formulazione chiara e precisa.
@@ -197,36 +197,60 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
         logger.error(f"Errore nella generazione della sfida: {e}")
 
     
-async def solution(update: Update) -> None:
+import os
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CallbackContext
+
+async def solution(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     chat_id = update.effective_chat.id
     recupered_challenge = database.get_last_challenge(chat_id=chat_id)
     contexts = [{
-    "role": "user",
-    "content": (
-            f"""Trovami una soluzione per questa sfida {recupered_challenge} che sia in codice e spiegato.
+        "role": "user",
+        "content": (
+            f"""Trova una soluzione per questa sfida {recupered_challenge}, spiegala in parte in codice e in parte in maniera descrittiva.
+              La soluzione deve avere sempre una formulazione chiara e precisa.
+              Ricorda di rispettare il linguaggio utilizzato per la challenge.
             """
-
-    )
+        )
     }]
+    
     keyboard = [
         [InlineKeyboardButton("Ricomincia", callback_data="restart")],
         [InlineKeyboardButton("Termina", callback_data="stop")]
     ]
-    replaymarkup= InlineKeyboardMarkup(keyboard)
-    text_solution_random = await messaggi.random_solution_message()
-    await query.edit_message_text(text=text_solution_random)
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    # Messaggio di attesa per l'utente
+    await query.edit_message_text(text="Sto generando la soluzione...")
+
     try:
-        challenge = llm.create_chat_completion(messages=contexts, max_tokens=500)
-        if(challenge):
-            challenge_content= challenge["choices"][0]["message"]["content"]
-            await query.edit_message_text(text=challenge_content, reply_markup=replaymarkup)
+        # Chiamata all'intelligenza artificiale per generare la soluzione
+        challenge = llm.create_chat_completion(messages=contexts, max_tokens=400)
+        if challenge:
+            challenge_content = challenge["choices"][0]["message"]["content"]
+
+            # Genera il PDF con la risposta dell'AI
+            pdf = PDF()
+            pdf.generate_pdf(challenge_content, "solution.pdf")
+
+            # Invia il PDF in chat
+            await context.bot.send_document(chat_id=chat_id, document=open("solution.pdf", "rb"))
+
+            # Rimuovi il file PDF dopo l'invio per evitare accumulo di file
+            os.remove("solution.pdf")
+
+            # Invia il messaggio di testo con la soluzione
+            await query.edit_message_text(text="Ecco la soluzione generata:", reply_markup=reply_markup)
             return
         else:
             await query.edit_message_text("Non sono riuscito a generare la soluzione, mi spiace.")
+            return
     except Exception as e:
-        logger.info("Errore: ", e)
+        logger.error(f"Errore nella generazione della soluzione: {e}")
+        await query.edit_message_text("Si è verificato un errore durante la generazione della soluzione.")
         return
+
 
 async def after_challenge (update: Update, context: CallbackContext):
     query = update.callback_query
@@ -237,7 +261,7 @@ async def after_challenge (update: Update, context: CallbackContext):
         await handle_challenge(update, context)
         return
     elif (choise == "solution"):
-        await solution(update)
+        await solution(update, context)
         return
     elif(choise == "stop"):
         text= await messaggi.get_messaggio("saluti")

@@ -4,7 +4,7 @@ from typing import List, Optional
 class Message:
     def __init__(self):
         self.messaggi = {
-            "benvenuto": "Benvenuto {}! \nSei nel canale di coding test di ✨ Unitiva!✨ 🥳 \nQui potrai mettere alla prova le tue competenze attraverso delle divertenti sfide di coding!🤖💻 \nPer cominciare, quale linguaggio vuoi scegliere?⤵️",
+            "benvenuto": "Benvenuto {}! \nSei nel canale di coding test di ✨ Fab!✨ 🥳 \nQui potrai mettere alla prova le tue competenze attraverso delle divertenti sfide di coding!🤖💻 \nPer cominciare, quale linguaggio vuoi scegliere?⤵️",
             "bentornato" : "Bentornato {}! \nRieccoti nel nostro canale, è bello rivederti.🤩\nLe sfide che hai già sostenuto sono state immagazzinate in memoria per garantirti un'esperienza unica e non ripetitiva, pertanto se desideri rimuovere i salvataggi ti basterà cliccare su 'Elimina cronologia'.😉\nChe sfida vuoi sostenere oggi?⤵️",
             "scelta": "😎Perfetto!😎 Hai scelto {} 😏! Ora non ti resta che scegliere il livello di difficoltà:",
             "error" : "Generazione non andata a buon fine",
