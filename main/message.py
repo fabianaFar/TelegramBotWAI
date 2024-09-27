@@ -8,8 +8,8 @@ class Message:
             "bentornato" : "Bentornato {}! \nRieccoti nel nostro canale, è bello rivederti.🤩\nLe sfide che hai già sostenuto sono state immagazzinate in memoria per garantirti un'esperienza unica e non ripetitiva, pertanto se desideri rimuovere i salvataggi ti basterà cliccare su 'Elimina cronologia'.😉\nChe sfida vuoi sostenere oggi?⤵️",
             "scelta": "😎Perfetto!😎 Hai scelto {} 😏! Ora non ti resta che scegliere il livello di difficoltà:",
             "error" : "Generazione non andata a buon fine",
-            "saluti": "E' stato un piacere averti con noi! Spero che questo canale ti abbia permesso di prepararti al meglio. Noi saremo qui quando ne avrai bisogno!😉 A presto!💪",
-            "ricomincia": "Hai deciso di eliminare tutta la cronologia, per cui non sono più presenti sfide associate al tuo user!\nPuoi ricominciare da capo in qualsiasi momento, ti basta digitare /start!",
+            "saluti": "E' stato un piacere averti con noi! Spero che questo canale ti abbia permesso di prepararti al meglio.\nNoi saremo qui quando ne avrai bisogno!😉 A presto!💪",
+            "ricomincia": "Hai deciso di eliminare tutta la cronologia, per cui non sono più presenti sfide associate al tuo user!\nPuoi ricominciare da capo in qualsiasi momento, ti basta digitare ✨/start!✨",
             "return" : "Pare che tu abbia cambiato idea sul linguaggio che hai scelto 😏. \nPuoi riselezionarlo: ⤵️"
         }
     async def get_messaggio(self, chiave: str, valore: Optional[str] = None) -> str:
@@ -37,8 +37,15 @@ class Message:
 
     async def random_solution_message(self) -> str:
         text_generation_solution : List[str] = [
-           "Stiamo facendo magia dietro le quinte! 🪄 Torniamo presto con la soluzione. Puoi metterti comodo nel mentre!", "I nostri ingegneri dei sogni stanno lavorando su questo! 🌟 Rimanete sintonizzati.",
-           "Abbiamo messo il caffè in macchina e stiamo risolvendo il mistero! ☕️🚀", "In questo momento, siamo impegnati a risolvere il rompicapo. 🧩 Resta con noi!", "Il nostro team sta mettendo a punto la risposta perfetta. 🤓💡","Siamo al lavoro per rendere tutto perfetto. 🚧 Grazie per la pazienza!",  "Stiamo preparando la tua soluzione, come dei veri ninja del codice! 🥷💻", "Abbiamo acceso le luci del backstage e siamo in modalità risoluzione! 🎭💡", "Ci stiamo cimentando in una piccola magia informatica. 🎩✨ Torniamo presto con i risultati!","Siamo al lavoro e abbiamo preso il nostro kit di strumenti virtuali. 🛠️🔍 A breve la soluzione!"
+           "Stiamo facendo magia dietro le quinte! 🪄 Torniamo presto con la soluzione. Puoi metterti comodo nel mentre!", 
+           "I nostri ingegneri dei sogni stanno lavorando per fornirti un file con la soluzione! 🌟 Resta sintonizzato.",
+           "Mhh sfida impegnativa, dacci del tempo per preparare la soluzione, intanto un bel caffè è gradito! ☕️🚀", 
+           "In questo momento, siamo impegnati a risolvere il rompicapo. 🧩 Resta con noi!", 
+           "Il nostro team sta mettendo a punto la soluzione perfetta. 🤓💡", 
+           "Stiamo preparando la tua soluzione, come dei veri ninja del codice! 🥷💻", 
+           "Abbiamo acceso le luci del backstage e siamo in modalità risoluzione! 🎭💡", 
+           "Ci stiamo cimentando in una piccola magia informatica. 🎩✨ Torniamo presto con i risultati!",
+           "Siamo al lavoro e abbiamo preso il nostro kit di strumenti virtuali. 🛠️🔍 A breve la soluzione!"
         ]
         return random.choice(text_generation_solution)
     

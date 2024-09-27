@@ -10,11 +10,13 @@ quicksand = config['FONT']
 
 class PDF(FPDF):
     def header(self):
-        self.image('BOT.png', 10, 8, 25)
+        self.image('./img/background.png', 0, 0, 210, 297)
+        self.image('./img/BOT.png', 10, 8, 25)
         self.add_font('Quicksand', '', 
                    quicksand, uni=True)
         self.set_font('Quicksand', '', 20)
         self.cell(0, 10, title, ln=1, align='C')
+        self.set_text_color(100,100,100)
         self.ln(20)
 
     def footer(self):
@@ -25,7 +27,8 @@ class PDF(FPDF):
 
     def add_content(self, content):
         self.set_font('Quicksand', '', 10)
-        self.multi_cell(0, 10, content)  # Permette di aggiungere più righe di testo.
+        self.set_text_color(0, 0, 0)
+        self.multi_cell(0, 5, content)  # Permette di aggiungere più righe di testo.
         self.ln()
 
     def generate_pdf(self, content, file_name):

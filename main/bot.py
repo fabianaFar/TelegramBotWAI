@@ -4,7 +4,7 @@ import logging
 import database as database
 from message import Message
 from llama_cpp import Llama
-from pdf2 import PDF
+from pdf_generator import PDF
 import nest_asyncio
 import json
 
@@ -208,7 +208,7 @@ async def solution(update: Update, context: CallbackContext) -> None:
     contexts = [{
         "role": "user",
         "content": (
-            f"""Trova una soluzione per questa sfida {recupered_challenge}, spiegala in parte in codice e in parte in maniera descrittiva.
+            f"""Trova una soluzione per questa sfida {recupered_challenge} in codice di programmazione, aggiungendo qualche commento descrittivo che spieghi il codice.
               La soluzione deve avere sempre una formulazione chiara e precisa.
               Ricorda di rispettare il linguaggio utilizzato per la challenge.
             """
@@ -220,16 +220,16 @@ async def solution(update: Update, context: CallbackContext) -> None:
         [InlineKeyboardButton("Termina", callback_data="stop")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-
+    random_solution = await messaggi.random_solution_message()
     # Messaggio di attesa per l'utente
-    await query.edit_message_text(text="Sto generando la soluzione...")
+    await query.edit_message_text(text=random_solution)
 
     try:
         # Chiamata all'intelligenza artificiale per generare la soluzione
-        challenge = llm.create_chat_completion(messages=contexts, max_tokens=400)
+        challenge = llm.create_chat_completion(messages=contexts)
         if challenge:
             challenge_content = challenge["choices"][0]["message"]["content"]
-
+            logger.info(challenge_content)
             # Genera il PDF con la risposta dell'AI
             pdf = PDF()
             pdf.generate_pdf(challenge_content, "solution.pdf")
@@ -241,7 +241,8 @@ async def solution(update: Update, context: CallbackContext) -> None:
             os.remove("solution.pdf")
 
             # Invia il messaggio di testo con la soluzione
-            await query.edit_message_text(text="Ecco la soluzione generata:", reply_markup=reply_markup)
+            await query.edit_message_text(text="Ecco la soluzione generata:")
+            await context.bot.send_message(chat_id=chat_id, text="Puoi scegliere se proseguire o terminare: ", reply_markup=reply_markup)
             return
         else:
             await query.edit_message_text("Non sono riuscito a generare la soluzione, mi spiace.")
