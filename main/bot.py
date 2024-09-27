@@ -1,5 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, CallbackContext
+import os
 import logging
 import database as database
 from message import Message
@@ -197,9 +198,7 @@ async def handle_challenge(update: Update, context: CallbackContext) -> None:
         logger.error(f"Errore nella generazione della sfida: {e}")
 
     
-import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CallbackContext
+
 
 async def solution(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
